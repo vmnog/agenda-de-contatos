@@ -1,5 +1,7 @@
 # Projeto Agenda de Contatos
 
+<img src="https://github.com/vmnog/agenda-de-contatos/blob/main/agenda_de_contatos_preview.png"/>
+
 ## Sobre o Projeto
 
 O projeto Agenda de Contatos é uma aplicação web simples para gerenciamento de contatos. Ele permite que os usuários adicionem, visualizem, editem e excluam contatos, incluindo informações como nome, telefone e e-mail.
