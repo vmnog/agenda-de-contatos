@@ -23,11 +23,23 @@ div#divider {
     margin-top: 2rem;
 }
 
-form {
+div#edit-buttons {
+    display: flex;
+    justify-content: flex-end;
+}
+
+form#add-contact {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding: 1rem;
+    width: 100%;
+}
+
+form#edit-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
 }
 
 form button {
@@ -66,19 +78,19 @@ input {
     background-color: #fff;
 }
 
-ul#contactList {
+ul#contact-list {
     list-style: none;
     padding: 0;
 }
 
-ul#contactList li {
+ul#contact-list li {
     display: flex;
-    align-items: center;
     gap: 1rem;
     padding: 1rem;
 }
 
-ul#contactList li div#contact-avatar {
+ul#contact-list li div#contact-avatar {
+    min-width: 50px;
     width: 50px;
     height: 50px;
     border-radius: 50%;
@@ -86,13 +98,13 @@ ul#contactList li div#contact-avatar {
     background-color: #bbb;
 }
 
-ul#contactList li div#contact-info {
+ul#contact-list li div#contact-info {
     display: flex;
     flex-direction: column;
     margin-right: auto;
 }
 
-ul#contactList div#contact-edit{
+ul#contact-list div#contact-edit{
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
 }

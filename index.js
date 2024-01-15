@@ -120,8 +120,7 @@ function addContactUI() {
   );
 
   if (!isFormValid) {
-    const firstErrorElement = document.querySelector(".error:not(:empty)");
-    firstErrorElement.previousElementSibling.focus();
+    focusFirstInvalidInputFromSelector("error");
     return;
   }
 
@@ -169,7 +168,7 @@ function displayContactsUI() {
     return contact;
   });
 
-  var contactListElement = document.getElementById("contactList");
+  var contactListElement = document.getElementById("contact-list");
   contactListElement.innerHTML = contactsListState
     .map((contact) => contactTemplateUI(contact))
     .join("");
@@ -235,6 +234,7 @@ function editContactUI(id) {
   );
 
   if (!isFormValid) {
+    focusFirstInvalidInputFromSelector("error-edit");
     return;
   }
 
@@ -254,49 +254,73 @@ function editContactUI(id) {
   });
 }
 
+function focusFirstInvalidInputFromSelector(selector) {
+  const firstErrorElement = document.querySelector(`.${selector}:not(:empty)`);
+  firstErrorElement.previousElementSibling.focus();
+}
+
 function contactTemplateUI(contact) {
   return `
-      <li>
-      <div id="contact-avatar">
-        <img src="${contact.imageUrl}" alt="${contact.name}" />
-       </div>
-       <div id="contact-info">
-            <span>${contact.name}</span>
-            <span>${contact.phone}</span>
-            <span>${contact.email}</span>
-        </div>
-        <button type="button" onclick="${
-          contact.isEditing
-            ? `editContactUI(${contact.id})`
-            : `enterEditModeUI(${contact.id})`
-        }">
-            ${contact.isEditing ? `Salvar` : `Editar`}
-            ${
-              contact.isEditing
-                ? `<span class="material-symbols-outlined">save</span>`
-                : `<span class="material-symbols-outlined">edit</span>`
-            }
-        </button>
-        <button type="button" onclick="deleteContactUI(${contact.id})">
-            Excluir 
-            <span class="material-symbols-outlined">delete</span>
-        </button>
-      </li>
-        ${
-          contact.isEditing
-            ? `
-            <div id="contact-edit">
-                <input type="text" id="edit-name" placeholder="Nome" value="${contact.name}" />
-                <input type="text" id="edit-phone" placeholder="Telefone" value="${contact.phone}" />
-                <input type="email" id="edit-email" placeholder="E-mail" value="${contact.email}" />
-                <span id="edit-name-error" class="error-edit"></span>
-                <span id="edit-phone-error" class="error-edit"></span>
-                <span id="edit-email-error" class="error-edit"></span>
+        <li>
+            <div id="contact-avatar">
+                <img src="${contact.imageUrl}" alt="${contact.name}" />
             </div>
-            `
-            : ""
-        }
-
+            <div id="contact-info">
+                <span>${contact.name}</span>
+                <span>${contact.phone}</span>
+                <span>${contact.email}</span>
+            </div>
+            <form id="edit-contact" onsubmit="submitForm(event, ${
+              contact.id
+            });">
+                <div id="edit-buttons">
+                    <button type="submit">
+                        ${getEditButtonLabel(contact)}
+                        ${getEditButtonIcon(contact)}
+                    </button>
+                    <button type="button" onclick="deleteContactUI(${
+                      contact.id
+                    })">
+                        Excluir 
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                </div>
+                ${contact.isEditing ? getContactEditSection(contact) : ""}
+        </li>
+            </form>
         <div id="divider"></div>
-      `;
+    `;
+}
+
+function submitForm(event, id) {
+  event.preventDefault();
+
+  const foundContact = contactsListState.find((contact) => contact.id === id);
+
+  foundContact.isEditing
+    ? editContactUI(foundContact.id)
+    : enterEditModeUI(foundContact.id);
+}
+
+function getEditButtonLabel(contact) {
+  return contact.isEditing ? "Salvar" : "Editar";
+}
+
+function getEditButtonIcon(contact) {
+  return contact.isEditing
+    ? `<span class="material-symbols-outlined">save</span>`
+    : `<span class="material-symbols-outlined">edit</span>`;
+}
+
+function getContactEditSection(contact) {
+  return `
+        <div id="contact-edit">
+                <input type="text" id="edit-name" placeholder="Nome" value="${contact.name}" />
+                <span id="edit-name-error" class="error-edit"></span>
+                <input type="text" id="edit-phone" placeholder="Telefone" value="${contact.phone}" />
+                <span id="edit-phone-error" class="error-edit"></span>
+                <input type="text" id="edit-email" placeholder="E-mail" value="${contact.email}" />
+                <span id="edit-email-error" class="error-edit"></span>
+        </div>
+    `;
 }
