@@ -135,7 +135,7 @@ function addContactUI() {
   });
   displayContactsUI();
   clearFormUI();
-  //   nameInput.focus();
+  nameInput.focus();
   Swal.fire({
     title: "Sucesso!",
     text: "Um novo contato foi adicionado!",
@@ -145,6 +145,7 @@ function addContactUI() {
 
 function deleteContactUI(id) {
   deleteContactDB(id);
+  exitEditModeForAllContactsUI();
   displayContactsUI();
   Swal.fire({
     title: "Sucesso!",
@@ -183,8 +184,14 @@ function setContactIsEditing(id, isEditing) {
   });
 }
 
+function exitEditModeForAllContactsUI() {
+  contactsListState = contactsListState.map((contact) => {
+    contact.isEditing = false;
+    return contact;
+  });
+}
+
 function enterEditModeUI(id) {
-  // prevent enter edit mode more than one item at a time
   const isEditing = contactsListState.some((contact) => contact.isEditing);
   if (isEditing) {
     Swal.fire({
