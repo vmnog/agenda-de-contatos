@@ -1,326 +1,333 @@
-let contactsListState = [];
 let phoneMask;
-let phoneEditMask;
+let editPhoneMask;
+let contactList = [];
 
 window.onload = () => {
   initializeDB();
-  displayContactsUI();
+  listContactsUI();
   makePhoneMaskUI();
 };
-
-function makePhoneMaskUI() {
-  const { phoneInput } = getInputFieldsUI();
-
-  const phoneMaskConfig = { mask: "(00) 00000-0000", lazy: false };
-
-  phoneMask = IMask(phoneInput, phoneMaskConfig);
-
-  phoneInput.addEventListener("input", () => {
-    phoneMask.updateValue();
-  });
-}
-
-function getInputFieldsUI(prefix = "") {
-  return {
-    nameInput: document.getElementById(prefix + "name"),
-    phoneInput: document.getElementById(prefix + "phone"),
-    emailInput: document.getElementById(prefix + "email"),
-  };
-}
-
-function validateField(
-  inputElement,
-  errorElement,
-  validateFunction,
-  errorMessage
-) {
-  if (validateFunction(inputElement.value)) {
-    errorElement.innerHTML = "";
-    return true;
-  } else {
-    errorElement.innerHTML = `<span class="material-symbols-outlined">error</span>${errorMessage}`;
-    return false;
-  }
-}
-
-function validateFieldsUI(textInputElements, errorElementsIds, phoneMask) {
-  const nameIsValid = validateField(
-    textInputElements.nameInput,
-    document.getElementById(errorElementsIds.nameError),
-    (value) => value.trim() && value.trim().length >= 3,
-    "Nome deve ter pelo menos 3 caracteres"
-  );
-
-  const phoneIsValid = validateField(
-    textInputElements.phoneInput,
-    document.getElementById(errorElementsIds.phoneError),
-    (value) => value.trim() && phoneMask.masked.isComplete,
-    "Telefone é obrigatório e deve ser válido"
-  );
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const emailIsValid = validateField(
-    textInputElements.emailInput,
-    document.getElementById(errorElementsIds.emailError),
-    (value) => value.trim() && emailRegex.test(value),
-    "Email é obrigatório e deve ser válido"
-  );
-
-  return nameIsValid && phoneIsValid && emailIsValid;
-}
 
 function initializeDB() {
   alasql("CREATE LOCALSTORAGE DATABASE IF NOT EXISTS ContactDB");
   alasql("ATTACH LOCALSTORAGE DATABASE ContactDB");
   alasql("USE ContactDB");
   alasql(`CREATE TABLE IF NOT EXISTS contacts (
-            id INT AUTO_INCREMENT,
-            name STRING,
-            phone STRING,
-            email STRING,
-            imageUrl STRING
-        )`);
+    id INT AUTO_INCREMENT,
+    name STRING,
+    phone STRING,
+    email STRING,
+    imageUrl STRING
+  )`);
 }
 
-function deleteContactDB(id) {
-  alasql("DELETE FROM contacts WHERE id = ?", [id]);
+function getAllContactsDB() {
+  return alasql("SELECT * FROM contacts");
 }
 
-function insertContactDB({ name, phone, email, imageUrl }) {
+function deleteContactDB(contactId) {
+  alasql("DELETE FROM contacts WHERE id = ?", [contactId]);
+}
+
+function addContactDB(name, phone, email, imageUrl) {
   alasql(
     "INSERT INTO contacts (name, phone, email, imageUrl) VALUES (?, ?, ?, ?)",
     [name, phone, email, imageUrl]
   );
 }
 
-function getAllContactsDB() {
-  return alasql("SELECT * FROM contacts ORDER BY id DESC");
-}
-
-function editContactDB({ id, name, phone, email }) {
-  alasql("UPDATE contacts SET name = ?, phone = ?, email = ? WHERE id = ?", [
-    name,
-    phone,
-    email,
-    id,
-  ]);
-}
-
-function addContactUI() {
-  const { nameInput, phoneInput, emailInput } = getInputFieldsUI();
-
-  const isFormValid = validateFieldsUI(
-    { nameInput, phoneInput, emailInput },
-    {
-      nameError: "name-error",
-      phoneError: "phone-error",
-      emailError: "email-error",
-    },
-    phoneMask
+function editContactDB({ name, phone, email, id }) {
+  alasql(
+    "UPDATE contacts SET name = ?, phone = ?, email = ? WHERE id = ?",
+    [name, phone, email, id]
   );
+}
+
+function makeEditPhoneMaskUI() {
+  const { phoneInput } = getInputFieldsUI('edit-')
+
+  editPhoneMask = IMask(phoneInput, { mask: '(00) 00000-0000' })
+
+  phoneInput.addEventListener('input', () => {
+    editPhoneMask.updateValue()
+  })
+}
+
+function makePhoneMaskUI() {
+  const { phoneInput } = getInputFieldsUI()
+
+  phoneMask = IMask(phoneInput, { mask: '(00) 00000-0000' })
+
+  phoneInput.addEventListener('input', () => {
+    phoneMask.updateValue()
+  })
+}
+
+function getInputFieldsUI(prefix = '') {
+  return {
+    nameInput: document.getElementById(prefix + "name"),
+    phoneInput: document.getElementById(prefix + "phone"),
+    emailInput: document.getElementById(prefix + "email"),
+  }
+}
+
+function clearInputFieldsUI() {
+  const { nameInput, emailInput, phoneInput } = getInputFieldsUI()
+
+  nameInput.value = ''
+  emailInput.value = ''
+  phoneInput.value = ''
+}
+
+function validateField(inputElement, errorElement, validateFunction, errorMessage) {
+  if (validateFunction(inputElement.value)) {
+    errorElement.innerHTML = ''
+    return true
+  } else {
+    errorElement.innerHTML = `<span class="material-symbols-outlined">error</span> ${errorMessage}`
+    return false
+  }
+}
+
+function validateInputFields(inputsElements, errorElementsIds) {
+  const isNameValid = validateField(
+    inputsElements.nameInput,
+    document.getElementById(errorElementsIds.nameError),
+    (value) => value.trim().length >= 3,
+    'O nome deve ter pelo menos 3 caracteres.'
+  )
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmailValid = validateField(
+    inputsElements.emailInput,
+    document.getElementById(errorElementsIds.emailError),
+    (value) => value.trim() && emailRegex.test(value),
+    'O e-mail eh obrigatorio e deve ser valido.'
+  )
+
+  const mask = errorElementsIds.phoneError === 'edit-phone-error' ? editPhoneMask : phoneMask
+
+  const isPhoneValid = validateField(
+    inputsElements.phoneInput,
+    document.getElementById(errorElementsIds.phoneError),
+    (value) => value.trim() && mask.masked.isComplete,
+    'O telefone eh obrigatorio e deve ser valido'
+  )
+
+  return isNameValid && isEmailValid && isPhoneValid
+}
+
+function addContactUI(event) {
+  event.preventDefault();
+  const { nameInput, emailInput, phoneInput } = getInputFieldsUI()
+
+  const isFormValid = validateInputFields(
+    { nameInput, emailInput, phoneInput },
+    {
+      nameError: 'name-error',
+      emailError: 'email-error',
+      phoneError: 'phone-error'
+    }
+  )
 
   if (!isFormValid) {
-    focusFirstInvalidInputFromSelector("error");
-    return;
+    return
   }
 
-  const imageUrl = `https://i.pravatar.cc/50?u=${emailInput.value}`;
-
-  insertContactDB({
-    name: nameInput.value,
-    phone: phoneInput.value,
-    email: emailInput.value,
-    imageUrl,
-  });
-  displayContactsUI();
-  clearFormUI();
+  const imageUrl = `https://i.pravatar.cc/50?u=${emailInput.value}`
+  addContactDB(nameInput.value, phoneInput.value, emailInput.value, imageUrl)
+  listContactsUI();
+  clearInputFieldsUI();
   nameInput.focus();
   Swal.fire({
     title: "Sucesso!",
-    text: "Um novo contato foi adicionado!",
+    text: "O contato foi adicionado!",
     icon: "success",
   });
 }
 
-function deleteContactUI(id) {
-  deleteContactDB(id);
-  exitEditModeForAllContactsUI();
-  displayContactsUI();
-  Swal.fire({
-    title: "Sucesso!",
-    text: `O contato foi excluído!`,
-    icon: "success",
-  });
-}
+function listContactsUI() {
+  const contacts = getAllContactsDB();
 
-function clearFormUI() {
-  const { nameInput, phoneInput, emailInput } = getInputFieldsUI();
-  nameInput.value = "";
-  phoneInput.value = "";
-  emailInput.value = "";
-}
+  const contactListElement = document.getElementById("contact-list");
 
-function displayContactsUI() {
-  const contactsDB = getAllContactsDB();
+  if (contacts.length === 0) {
+    contactListElement.innerHTML = `
+    <span>Nenhum contato encontrado, sua agenda esta vazia</span>
+    `;
+    return;
+  }
 
-  contactsListState = contactsDB.map((contact, index) => {
-    contact.isEditing = contactsListState[index]?.isEditing;
-    return contact;
-  });
+  contactList = contacts.map((contact, index) => {
+    contact.isEditing = contactList[index]?.isEditing
+    return contact
+  })
 
-  var contactListElement = document.getElementById("contact-list");
-  contactListElement.innerHTML = contactsListState
+  contactListElement.innerHTML = contactList
     .map((contact) => contactTemplateUI(contact))
     .join("");
 }
 
-function setContactIsEditing(id, isEditing) {
-  contactsListState = contactsListState.map((contact) => {
-    if (contact.id === id) {
-      contact.isEditing = isEditing;
-    }
-    return contact;
-  });
-}
-
-function exitEditModeForAllContactsUI() {
-  contactsListState = contactsListState.map((contact) => {
-    contact.isEditing = false;
-    return contact;
-  });
-}
-
-function enterEditModeUI(id) {
-  const isEditing = contactsListState.some((contact) => contact.isEditing);
-  if (isEditing) {
-    Swal.fire({
-      title: "Ops!",
-      text: "Você já está editando um contato! Finalize a edição para continuar.",
-      icon: "error",
-    });
-    return;
-  }
-
-  setContactIsEditing(id, true);
-  displayContactsUI();
-  makePhoneMaskUI(phoneEditMask, document.getElementById("edit-phone"));
-}
-
-function makePhoneEditMaskUI() {
-  var phoneEditInput = document.getElementById("edit-phone");
-
-  const phoneMaskConfig = { mask: "(00) 00000-0000", lazy: false };
-
-  phoneEditMask = IMask(phoneEditInput, phoneMaskConfig);
-
-  phoneEditInput.addEventListener("input", () => {
-    phoneEditMask.updateValue();
-  });
-}
-
-function editContactUI(id) {
-  const { nameInput, phoneInput, emailInput } = getInputFieldsUI("edit-");
-
-  makePhoneEditMaskUI();
-
-  const isFormValid = validateFieldsUI(
-    { nameInput, phoneInput, emailInput },
-    {
-      nameError: "edit-name-error",
-      phoneError: "edit-phone-error",
-      emailError: "edit-email-error",
-    },
-    phoneEditMask
-  );
-
-  if (!isFormValid) {
-    focusFirstInvalidInputFromSelector("error-edit");
-    return;
-  }
-
-  editContactDB({
-    id,
-    name: nameInput.value,
-    phone: phoneInput.value,
-    email: emailInput.value,
-  });
-  setContactIsEditing(id, false);
-  displayContactsUI();
-
+function deleteContactUI(contactId) {
+  deleteContactDB(contactId);
+  listContactsUI();
   Swal.fire({
     title: "Sucesso!",
-    text: `O contato "${nameInput.value}" foi editado!`,
+    text: "O contato foi removido!",
     icon: "success",
   });
 }
 
-function focusFirstInvalidInputFromSelector(selector) {
-  const firstErrorElement = document.querySelector(`.${selector}:not(:empty)`);
-  firstErrorElement.previousElementSibling.focus();
+function setIsContactEditing(contactId, isEditing) {
+  contactList = contactList.map((contact) => {
+    if (contact.id === contactId) {
+      contact.isEditing = isEditing
+    }
+    return contact
+  })
+}
+
+function editContactFormUI(event, contactId) {
+  event.preventDefault();
+  const contact = contactList.find(contact => contact.id === contactId)
+  if (contact.isEditing) {
+    const { nameInput, phoneInput, emailInput } = getInputFieldsUI('edit-')
+    const isFormValid = validateInputFields(
+      { nameInput, phoneInput, emailInput },
+      {
+        nameError: 'edit-name-error',
+        emailError: 'edit-email-error',
+        phoneError: 'edit-phone-error'
+      }
+    )
+
+    if (!isFormValid) {
+      return
+    }
+
+    editContactDB({
+      name: nameInput.value,
+      phone: phoneInput.value,
+      email: emailInput.value,
+      id: contactId
+    })
+
+    Swal.fire({
+      title: "Sucesso!",
+      text: "O contato foi editado!",
+      icon: "success",
+    });
+  }
+  const isSomeContactEditing = contactList.some(
+    contact => contact.isEditing && contact.id !== contactId
+  )
+  if (isSomeContactEditing) {
+    Swal.fire({
+      title: "Ops!",
+      text: "Voce ja esta editando um contato!",
+      icon: "error",
+    });
+    return
+  }
+  setIsContactEditing(contactId, !contact.isEditing);
+  listContactsUI();
+  fillEditInputFields(contact);
+  makeEditPhoneMaskUI();
+}
+
+function fillEditInputFields(contact) {
+  const { nameInput, phoneInput, emailInput } = getInputFieldsUI('edit-')
+
+  nameInput.value = contact.name
+  phoneInput.value = contact.phone
+  emailInput.value = contact.email
+}
+
+function displayEditContactSection() {
+  return `
+<div id="contact-edit">
+    <input type="text" id="edit-name" name="name" placeholder="Nome" />
+    <span id="edit-name-error" class="error"></span>
+    <input type="text" id="edit-phone" name="phone" placeholder="Telefone" />
+    <span id="edit-phone-error" class="error"></span>
+    <input type="text" id="edit-email" name="email" placeholder="E-mail" />
+    <span id="edit-email-error" class="error"></span>
+</div>
+`
+}
+
+function getEditButtonContent(isEditing) {
+  const editingContent = `
+    Editar
+    <span class="material-symbols-outlined"> edit </span>
+  `;
+  const savingContent = `
+    Salvar
+    <span class="material-symbols-outlined"> save </span>
+  `;
+
+  return isEditing ? savingContent : editingContent;
 }
 
 function contactTemplateUI(contact) {
   return `
-        <li>
-            <div id="contact-avatar">
-                <img src="${contact.imageUrl}" alt="${contact.name}" />
-            </div>
-            <div id="contact-info">
-                <span>${contact.name}</span>
-                <span>${contact.phone}</span>
-                <span>${contact.email}</span>
-            </div>
-            <form id="edit-contact" onsubmit="submitForm(event, ${
-              contact.id
-            });">
-                <div id="edit-buttons">
-                    <button type="submit">
-                        ${getEditButtonLabel(contact)}
-                        ${getEditButtonIcon(contact)}
-                    </button>
-                    <button type="button" onclick="deleteContactUI(${
-                      contact.id
-                    })">
-                        Excluir 
-                        <span class="material-symbols-outlined">delete</span>
-                    </button>
-                </div>
-                ${contact.isEditing ? getContactEditSection(contact) : ""}
-        </li>
-            </form>
-        <div id="divider"></div>
+      <li>
+        <div id="contact-avatar">
+          <img
+            src="${contact.imageUrl}"
+            alt="${contact.name}"
+          />
+        </div>
+        <div id="contact-info">
+          <span>${contact.name}</span>
+          <span>${contact.phone}</span>
+          <span>${contact.email}</span>
+        </div>
+        <form id="edit-contact" onsubmit="editContactFormUI(event, ${contact.id})">
+          <div id="edit-buttons">
+            <button type="submit">
+              ${getEditButtonContent(contact.isEditing)}
+            </button>
+            <button type="button" onclick="deleteContactUI(${contact.id})">
+              Excluir
+              <span class="material-symbols-outlined"> delete </span>
+            </button>
+          </div>
+          ${contact.isEditing ? displayEditContactSection() : ""}
+        </form>
+      </li>
+      <div id="divider"></div>
     `;
 }
 
-function submitForm(event, id) {
-  event.preventDefault();
-
-  const foundContact = contactsListState.find((contact) => contact.id === id);
-
-  foundContact.isEditing
-    ? editContactUI(foundContact.id)
-    : enterEditModeUI(foundContact.id);
-}
-
-function getEditButtonLabel(contact) {
-  return contact.isEditing ? "Salvar" : "Editar";
-}
-
-function getEditButtonIcon(contact) {
-  return contact.isEditing
-    ? `<span class="material-symbols-outlined">save</span>`
-    : `<span class="material-symbols-outlined">edit</span>`;
-}
-
-function getContactEditSection(contact) {
+// TODO: only show edit when user is editing
+function editContactSessionUI() {
   return `
         <div id="contact-edit">
-                <input type="text" id="edit-name" placeholder="Nome" value="${contact.name}" />
-                <span id="edit-name-error" class="error-edit"></span>
-                <input type="text" id="edit-phone" placeholder="Telefone" value="${contact.phone}" />
-                <span id="edit-phone-error" class="error-edit"></span>
-                <input type="text" id="edit-email" placeholder="E-mail" value="${contact.email}" />
-                <span id="edit-email-error" class="error-edit"></span>
+            <input
+                type="text"
+                id="edit-name"
+                name="edit-name"
+                placeholder="Nome"
+            />
+            <span id="edit-name-error" class="error-edit">
+            <span class="material-symbols-outlined"> error </span>
+            Campo inválido
+            </span>
+            <input
+                type="text"
+                id="edit-phone"
+                name="edit-phone"
+                placeholder="Telefone"
+            />
+            <span id="edit-phone-error" class="error-edit"></span>
+            <input
+                type="text"
+                id="edit-email"
+                name="edit-email"
+                placeholder="E-mail"
+            />
+            <span id="edit-email-error" class="error-edit"></span>
         </div>
     `;
 }
