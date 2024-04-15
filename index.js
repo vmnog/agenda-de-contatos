@@ -29,7 +29,7 @@ function deleteContactDB(contactId) {
   alasql("DELETE FROM contacts WHERE id = ?", [contactId]);
 }
 
-function addContactDB(name, phone, email, imageUrl) {
+function addContactDB({ name, phone, email, imageUrl }) {
   alasql(
     "INSERT INTO contacts (name, phone, email, imageUrl) VALUES (?, ?, ?, ?)",
     [name, phone, email, imageUrl]
@@ -105,7 +105,7 @@ function validateInputFields(inputsElements, errorElementsIds) {
     'O e-mail eh obrigatorio e deve ser valido.'
   )
 
-  const mask = errorElementsIds.phoneError === 'edit-phone-error' ? editPhoneMask : phoneMask
+  const mask = errorElementsIds.phoneError === 'edit-phone-error' ? editPhoneMask : phoneMask;
 
   const isPhoneValid = validateField(
     inputsElements.phoneInput,
@@ -135,7 +135,13 @@ function addContactUI(event) {
   }
 
   const imageUrl = `https://i.pravatar.cc/50?u=${emailInput.value}`
-  addContactDB(nameInput.value, phoneInput.value, emailInput.value, imageUrl)
+
+  addContactDB({
+    name: nameInput.value,
+    phone: phoneInput.value,
+    email: emailInput.value,
+    imageUrl
+  })
   listContactsUI();
   clearInputFieldsUI();
   nameInput.focus();
@@ -168,7 +174,12 @@ function listContactsUI() {
     .join("");
 }
 
+function resetAllContactsEditing() {
+  contactList = contactList.map(contact => contact.isEditing = false)
+}
+
 function deleteContactUI(contactId) {
+  resetAllContactsEditing();
   deleteContactDB(contactId);
   listContactsUI();
   Swal.fire({
@@ -192,18 +203,15 @@ function editContactFormUI(event, contactId) {
   const contact = contactList.find(contact => contact.id === contactId)
   if (contact.isEditing) {
     const { nameInput, phoneInput, emailInput } = getInputFieldsUI('edit-')
-    const isFormValid = validateInputFields(
-      { nameInput, phoneInput, emailInput },
-      {
-        nameError: 'edit-name-error',
-        emailError: 'edit-email-error',
-        phoneError: 'edit-phone-error'
-      }
-    )
+    const isFormValid = validateInputFields({
+      nameInput, phoneInput, emailInput,
+    }, {
+      nameError: 'edit-name-error',
+      emailError: 'edit-email-error',
+      phoneError: 'edit-phone-error',
+    })
 
-    if (!isFormValid) {
-      return
-    }
+    if (!isFormValid) return
 
     editContactDB({
       name: nameInput.value,
@@ -214,21 +222,21 @@ function editContactFormUI(event, contactId) {
 
     Swal.fire({
       title: "Sucesso!",
-      text: "O contato foi editado!",
+      text: "O contato foi atualizado!",
       icon: "success",
     });
   }
-  const isSomeContactEditing = contactList.some(
-    contact => contact.isEditing && contact.id !== contactId
-  )
-  if (isSomeContactEditing) {
+  const isSomeContactBeingEdited = contactList.some(contact => contact.id !== contactId && contact.isEditing)
+
+  if (isSomeContactBeingEdited) {
     Swal.fire({
       title: "Ops!",
-      text: "Voce ja esta editando um contato!",
+      text: "Voce ja esta editando outro contato!",
       icon: "error",
     });
     return
   }
+
   setIsContactEditing(contactId, !contact.isEditing);
   listContactsUI();
   fillEditInputFields(contact);
@@ -236,11 +244,11 @@ function editContactFormUI(event, contactId) {
 }
 
 function fillEditInputFields(contact) {
-  const { nameInput, phoneInput, emailInput } = getInputFieldsUI('edit-')
+  const { nameInput, emailInput, phoneInput } = getInputFieldsUI('edit-')
 
   nameInput.value = contact.name
-  phoneInput.value = contact.phone
   emailInput.value = contact.email
+  phoneInput.value = contact.phone
 }
 
 function displayEditContactSection() {
