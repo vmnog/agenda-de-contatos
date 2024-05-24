@@ -47,7 +47,7 @@ Bem-vindo ao repositório da Agenda de Contatos! Este projeto é uma aplicação
 
 - `index.html`: Contém a estrutura HTML da aplicação.
 - `style.css`: Contém os estilos CSS para a aplicação.
-- `app.js`: Contém a lógica JavaScript para manipulação da lista de contatos.
+- `index.js`: Contém a lógica JavaScript para manipulação da lista de contatos.
 
 ## Contribuição
 
