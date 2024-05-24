@@ -1,6 +1,6 @@
 ### README
 
-# Agenda de Contatos
+# Agenda de Contatos com HTML, CSS e Javascript | @caraquecoda 
 
 Bem-vindo ao repositório da Agenda de Contatos! Este projeto é uma aplicação simples de lista de contatos desenvolvida com HTML, CSS e JavaScript.
 
